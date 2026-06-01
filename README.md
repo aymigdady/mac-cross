@@ -71,6 +71,52 @@ REDIS_URL=<Memorystore secret>
 
 See also [deploy/GCS-HNSW.md](deploy/GCS-HNSW.md).
 
+## Cloud Run (production)
+
+Deploy as a **separate Cloud Run service** (`mac-cross`) in project `mac-cost-intellegence`. The main app (`cost-control-app`) calls it via `CCAPR_CROSS_SERVICE_URL` + shared Bearer token.
+
+### One-time setup
+
+```bash
+# Prerequisites: cost-control setup-cloud-run-persistence.sh (Redis + VPC connector)
+./deploy/setup-cloud-run.sh
+./deploy/setup-gcb-autodeploy.sh   # optional: auto-deploy on push to main
+
+# Add Anthropic API key (required for cross-match):
+#   GCP Console → Secret Manager → ccapr-anthropic-api-key → New version
+```
+
+### Deploy
+
+```bash
+gcloud builds triggers run mac-cross-deploy --branch=main --region=us-central1
+# Then redeploy cost-control so it picks up mac-cross URL:
+# gcloud builds triggers run cost-control-app-main-4-deploy --branch=main
+```
+
+Or push to `main` on `aymigdady/mac-cross` if the Cloud Build trigger is configured.
+
+### Cloud Run resources
+
+- 4Gi memory, 2 CPU, 300s timeout, max-instances 1
+- Secrets: `REDIS_URL`, `ANTHROPIC_API_KEY`, `CCAPR_CROSS_SERVICE_TOKEN`
+- Env: `CCAPR_GCS_BUCKET`, embedding/cross-search tuning (see `cloudbuild.yaml`)
+
+### Verify
+
+```bash
+URL=$(gcloud run services describe mac-cross --region=us-central1 --format='value(status.url)')
+curl -s "$URL/health"
+curl -s -H "Authorization: Bearer $(gcloud secrets versions access latest --secret=ccapr-cross-service-token)" \
+  "$URL/ready"
+```
+
+After cross compare in the app, check HNSW uploads:
+
+```bash
+gcloud storage ls gs://mac-cost-intellegence-ccapr-artifacts/hnsw/
+```
+
 ## API (Bearer token if `CCAPR_CROSS_SERVICE_TOKEN` is set)
 
 | Method | Path |
