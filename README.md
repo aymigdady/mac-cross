@@ -14,6 +14,13 @@ Service: http://localhost:8081
 
 ## Run with MAC (cost-control-app-main-4)
 
+Clone the main app and this repo as siblings:
+
+```bash
+git clone https://github.com/aymigdady/cost-control-app-main-4.git
+git clone https://github.com/aymigdady/mac-cross.git MAC-CROSS
+```
+
 In the MAC repo `docker-compose.yml`, `mac-cross` is wired when `CCAPR_CROSS_SERVICE_URL=http://mac-cross:8080` and both stacks share the same Redis + `ccapr-emb-cache` volume.
 
 Set the same `CCAPR_CROSS_SERVICE_TOKEN` in both services.
