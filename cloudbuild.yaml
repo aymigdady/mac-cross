@@ -22,7 +22,7 @@ steps:
       - build
       - --no-cache
       - -t
-      - $_AR_HOSTNAME/$_AR_PROJECT_ID/$_AR_REPOSITORY/$REPO_NAME/$_SERVICE_NAME:$COMMIT_SHA
+      - $_AR_HOSTNAME/$_AR_PROJECT_ID/$_AR_REPOSITORY/$REPO_NAME/$_SERVICE_NAME:$BUILD_ID
       - .
       - -f
       - Dockerfile
@@ -31,7 +31,7 @@ steps:
     id: Push
     args:
       - push
-      - $_AR_HOSTNAME/$_AR_PROJECT_ID/$_AR_REPOSITORY/$REPO_NAME/$_SERVICE_NAME:$COMMIT_SHA
+      - $_AR_HOSTNAME/$_AR_PROJECT_ID/$_AR_REPOSITORY/$REPO_NAME/$_SERVICE_NAME:$BUILD_ID
 
   - name: gcr.io/google.com/cloudsdktool/cloud-sdk:slim
     id: Deploy
@@ -40,23 +40,7 @@ steps:
       - -c
       - |
         set -euo pipefail
-        IMAGE="$_AR_HOSTNAME/$_AR_PROJECT_ID/$_AR_REPOSITORY/$REPO_NAME/$_SERVICE_NAME:$COMMIT_SHA"
-        ENV_VARS="CCAPR_HNSW_CACHE_DIR=/tmp/ccapr-hnsw-cache"
-        ENV_VARS="$$ENV_VARS,CCAPR_GCS_BUCKET=$_GCS_BUCKET"
-        ENV_VARS="$$ENV_VARS,CCAPR_ENABLE_EMBEDDINGS=1"
-        ENV_VARS="$$ENV_VARS,CCAPR_ENABLE_EMBEDDINGS_PER_COMPANY=MBL,IFAS,MSB"
-        ENV_VARS="$$ENV_VARS,CCAPR_USE_CROSS_ENCODER=1"
-        ENV_VARS="$$ENV_VARS,CCAPR_USE_STRUCTURED_FILTERS=1"
-        ENV_VARS="$$ENV_VARS,CCAPR_ATTR_LLM_FALLBACK=1"
-        ENV_VARS="$$ENV_VARS,CCAPR_USE_QUERY_EXPANSION=1"
-        ENV_VARS="$$ENV_VARS,CCAPR_QE_MAX_PARAPHRASES=4"
-        ENV_VARS="$$ENV_VARS,CCAPR_HYBRID_BM25_TOP_K=40"
-        ENV_VARS="$$ENV_VARS,CCAPR_HYBRID_EMB_TOP_K=40"
-        ENV_VARS="$$ENV_VARS,CCAPR_HYBRID_UNION_MAX=80"
-        ENV_VARS="$$ENV_VARS,CCAPR_CE_SKIP_HYBRID_TOP1=0"
-        ENV_VARS="$$ENV_VARS,CCAPR_CE_SKIP_HYBRID_MARGIN=0"
-        ENV_VARS="$$ENV_VARS,CCAPR_CROSS_CANDIDATES_PER_LINE=6"
-        ENV_VARS="$$ENV_VARS,CCAPR_CROSS_REMATCH_CANDIDATES_PER_LINE=12"
+        IMAGE="$_AR_HOSTNAME/$_AR_PROJECT_ID/$_AR_REPOSITORY/$REPO_NAME/$_SERVICE_NAME:$BUILD_ID"
         gcloud run deploy "$_SERVICE_NAME" \
           --platform=managed \
           --image="$$IMAGE" \
@@ -65,17 +49,17 @@ steps:
           --vpc-connector="$_VPC_CONNECTOR" \
           --vpc-egress=private-ranges-only \
           --set-secrets="REDIS_URL=$_REDIS_SECRET:latest,ANTHROPIC_API_KEY=$_ANTHROPIC_SECRET:latest,CCAPR_CROSS_SERVICE_TOKEN=$_CROSS_TOKEN_SECRET:latest" \
-          --update-env-vars="$$ENV_VARS" \
+          --env-vars-file=deploy/cloudrun-env.yaml \
           --allow-unauthenticated \
           --max-instances=1 \
           --memory=4Gi \
           --cpu=2 \
           --timeout=300 \
-          --labels=managed-by=gcp-cloud-build-deploy-cloud-run,commit-sha=$COMMIT_SHA,gcb-build-id=$BUILD_ID \
+          --labels=managed-by=gcp-cloud-build-deploy-cloud-run,commit-sha=$COMMIT_SHA,build-id=$BUILD_ID,gcb-build-id=$BUILD_ID \
           --quiet
 
 images:
-  - $_AR_HOSTNAME/$_AR_PROJECT_ID/$_AR_REPOSITORY/$REPO_NAME/$_SERVICE_NAME:$COMMIT_SHA
+  - $_AR_HOSTNAME/$_AR_PROJECT_ID/$_AR_REPOSITORY/$REPO_NAME/$_SERVICE_NAME:$BUILD_ID
 
 tags:
   - gcp-cloud-build-deploy-cloud-run
