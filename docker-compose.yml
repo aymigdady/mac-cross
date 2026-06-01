@@ -1,0 +1,26 @@
+# Standalone dev stack (shares Redis with MAC when both run on same host network).
+services:
+  redis:
+    image: redis:7-alpine
+    ports:
+      - "127.0.0.1:6379:6379"
+    volumes:
+      - mac-cross-redis:/data
+
+  mac-cross:
+    build: .
+    ports:
+      - "8081:8080"
+    environment:
+      REDIS_URL: redis://redis:6379/0
+      CCAPR_HNSW_CACHE_DIR: /var/ccapr/emb-cache
+      CCAPR_CROSS_SERVICE_TOKEN: ${CCAPR_CROSS_SERVICE_TOKEN:-dev-cross-token}
+      ANTHROPIC_API_KEY: ${ANTHROPIC_API_KEY:-}
+    volumes:
+      - mac-cross-emb-cache:/var/ccapr/emb-cache
+    depends_on:
+      - redis
+
+volumes:
+  mac-cross-redis:
+  mac-cross-emb-cache:

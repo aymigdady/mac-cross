@@ -1,0 +1,26 @@
+{
+  "version": 1,
+  "description": "Cross-match golden pairs: ids must match builders in tests/test_cross_match_golden_set.py. Extend this file to 20–30 real export-derived cases as you curate them.",
+  "cases": [
+    {
+      "id": "deep_corpus_titanium",
+      "query": "titanium cryogenic valve procurement",
+      "expected_item_no": "599"
+    },
+    {
+      "id": "near_exact_three_way",
+      "query": "Widget Type A 12mm",
+      "expected_item_no": "c"
+    },
+    {
+      "id": "hastelloy_among_steel_noise",
+      "query": "hastelloy reactor flange specialty procurement",
+      "expected_item_no": "TARGET"
+    },
+    {
+      "id": "copper_elbow_distinct",
+      "query": "copper press elbow 22mm",
+      "expected_item_no": "CU-22"
+    }
+  ]
+}
