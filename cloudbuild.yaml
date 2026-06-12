@@ -52,8 +52,10 @@ steps:
           --env-vars-file=deploy/cloudrun-env.yaml \
           --allow-unauthenticated \
           --max-instances=1 \
-          --memory=4Gi \
-          --cpu=2 \
+          --min-instances=1 \
+          --no-cpu-throttling \
+          --memory=8Gi \
+          --cpu=4 \
           --timeout=300 \
           --labels=managed-by=gcp-cloud-build-deploy-cloud-run,commit-sha=$COMMIT_SHA,build-id=$BUILD_ID,gcb-build-id=$BUILD_ID \
           --quiet
