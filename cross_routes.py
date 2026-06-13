@@ -199,3 +199,29 @@ def cross_company_match():
         logger.exception("cross-company match failed")
         return jsonify({"error": str(exc)}), 500
     return jsonify({"rows": rows, "ok": True})
+
+
+@bp.post("/api/prime-contract/scope-match")
+def prime_contract_scope_match():
+    if err := _require_auth():
+        return err
+    data = request.get_json(silent=True) or {}
+    scope_items = data.get("scopeItems") or data.get("scope_items") or []
+    lines = data.get("lines") or []
+    if not isinstance(scope_items, list) or not isinstance(lines, list):
+        return jsonify({"error": "scopeItems and lines must be arrays."}), 400
+    texts = [str(x).strip() for x in scope_items if str(x).strip()]
+    try:
+        from prime_contract.scope_match import match_lines_to_scope
+
+        redis_client = get_redis_client_for_cache_use()
+        matched = match_lines_to_scope(
+            scope_items=texts,
+            lines=lines,
+            scope_fingerprint=str(data.get("scopeFingerprint") or data.get("scope_fingerprint") or ""),
+            redis_client=redis_client,
+        )
+    except Exception as exc:
+        logger.exception("prime-contract scope-match failed")
+        return jsonify({"error": str(exc)}), 500
+    return jsonify({"ok": True, "lines": matched, "projectCode": data.get("projectCode") or ""})
